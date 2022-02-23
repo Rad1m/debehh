@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Lottery is Ownable {
     address payable[] public players;
-    address payable[] public recentWinner;
+    address payable[] public winners;
     uint256 public entryFee;
     uint256 public betValue;
 
@@ -24,17 +24,17 @@ contract Lottery is Ownable {
     uint256 public fee;
     bytes32 public keyhash;
 
-    constructor(uint256 _fee) public {fee = _fee;}
+    constructor() public {}
 
    function enterLottery(uint256 _betAmount) public payable {
        require(lottery_state == LOTTERY_STATE.OPEN);
        require(msg.value >= getEntranceFee(_betAmount), "Minimum bet not reached");
-
+       players.push(payable(msg.sender));
    }
 
    function getEntranceFee(uint256 _betAmount) public pure returns (uint256) {
        // do some rules to enter here
-       uint256 minimumBet = _betAmount;
+       uint256 minimumBet = _betAmount*2;
        return minimumBet;
    }
 
@@ -51,8 +51,6 @@ contract Lottery is Ownable {
    }
 
    function getWinners() public onlyOwner {
-
+       lottery_state = LOTTERY_STATE.CLOSED;
    }
-
-
 }
