@@ -1,4 +1,5 @@
 const { expect } = require("chai");
+const { ethers } = require("hardhat");
 
 describe.only("Betting Contract", function () {
   // A common pattern is to declare some variables, and assign them in the
@@ -17,11 +18,19 @@ describe.only("Betting Contract", function () {
     await lottery.deployed();
   });
 
+  describe("Enter lottery", function(){
+    it("Should return staked amount", async function(){
+    //lottery.enter({"from": get_account(), "value": lottery.getEntranceFee()})
+    await lottery.enterLottery(addr2.address, 50);
+    const stakedAmount = await lottery.balances(addr2.address);
+    expect(stakedAmount).to.equal(50);
+    });
+  });
+
   describe("Get entrance fee", function () {
     it("Should check the betting amount", async function () {
       const betAmount = await lottery.getEntranceFee(100);
-      expect(betAmount).to.equal(200);
-      
+      expect(betAmount).to.equal(100);
     });
   });
 });

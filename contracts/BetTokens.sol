@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "hardhat/console.sol";
 
 // Functionality:
 // Stake
@@ -9,6 +10,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 // Winners
 
 contract Lottery is Ownable {
+    mapping(address => uint) public balances;
     address payable[] public players;
     address payable[] public winners;
     uint256 public entryFee;
@@ -26,15 +28,19 @@ contract Lottery is Ownable {
 
     constructor() public {}
 
-   function enterLottery(uint256 _betAmount) public payable {
+   function enterLottery(address _staker, uint256 _amount) public payable {
        require(lottery_state == LOTTERY_STATE.OPEN);
-       require(msg.value >= getEntranceFee(_betAmount), "Minimum bet not reached");
-       players.push(payable(msg.sender));
+       require(_amount >= 50, "Minimum bet not reached");
+       getEntranceFee(_amount);
+       players.push(payable(_staker));
+       balances[_staker] = _amount;
+       console.log("Sender address is %s :", msg.sender);
+       console.log("Staker address is %s :", _staker);
    }
 
    function getEntranceFee(uint256 _betAmount) public pure returns (uint256) {
        // do some rules to enter here
-       uint256 minimumBet = _betAmount*2;
+       uint256 minimumBet = _betAmount;
        return minimumBet;
    }
 
