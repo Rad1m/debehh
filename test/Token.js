@@ -1,6 +1,5 @@
 // We import Chai to use its asserting functions here.
-const { expect } = require("chai")
-
+const { expect } = require("chai");
 
 describe("Token contract", function () {
 
@@ -13,6 +12,7 @@ describe("Token contract", function () {
   let addr1;
   let addr2;
   let addrs;
+  let ownerBalance;
 
   // `beforeEach` will run before each test, re-deploying the contract every
   // time. It receives a callback, which can be async.
@@ -32,10 +32,49 @@ describe("Token contract", function () {
     });
 
     it("Should assign the total supply of tokens to the owner", async function () {
-      const ownerBalance = await deBeToken.balanceOf(owner.address);
+      ownerBalance = await deBeToken.balanceOf(owner.address);
       expect(await deBeToken.totalSupply()).to.equal(ownerBalance);
     });
   });
+
+  describe("Mint and Burn", function (){
+    it("Should mint tokens", async function (){
+      const mintAmount = 5000;
+      console.log("Total supply before mint is: ", (await deBeToken.totalSupply()).toString())
+      await deBeToken.mint(addr1.address, mintAmount);
+      const addr1Balance = await deBeToken.balanceOf(addr1.address);
+      console.log("Balance after mint: ", addr1Balance.toString());
+      console.log("Total supply after mint is: ", (await deBeToken.totalSupply()).toString())
+      const totSup = await deBeToken.totalSupply();
+      expect(addr1Balance).to.equal(mintAmount);
+    })
+
+    it("Should BURN! tokens", async function (){
+      let burnAmount = 1000;
+      const ownerBalanceBeforeBurn = await deBeToken.balanceOf(owner.address);
+      console.log("Balance before burn: ", ownerBalanceBeforeBurn.toString());
+      await deBeToken.burn(burnAmount);
+      const ownerBalanceAftrBurn = await deBeToken.balanceOf(owner.address);
+      console.log("Balance after burn: ", ownerBalanceAftrBurn.toString());
+      expect(ownerBalanceAftrBurn).to.below(ownerBalanceBeforeBurn);
+    })
+
+    it("Should BURN FROM! tokens", async function (){
+      const burnAmount = 500;
+      const mintAmount = 5000;
+      const burnAddress = owner.address;
+      await deBeToken.mint(burnAddress, mintAmount);
+      const addr1BalanceBeforeBurn = await deBeToken.balanceOf(burnAddress);
+      console.log("Balance addr1 before burn: ", addr1BalanceBeforeBurn.toString());
+      console.log("Burn amount: ", burnAmount.toString());
+      await deBeToken.approve(burnAddress, burnAmount);
+      await deBeToken.burnFrom(burnAddress, burnAmount);
+      const addr1BalanceAfterBurn = await deBeToken.balanceOf(burnAddress);
+      console.log("Balance after burn: ", addr1BalanceAfterBurn.toString());
+      expect(addr1BalanceAfterBurn).to.below(addr1BalanceBeforeBurn);
+    })
+
+  })
 
   describe("Transactions", function () {
     it("Should transfer tokens between accounts", async function () {
@@ -51,21 +90,4 @@ describe("Token contract", function () {
       expect(addr2Balance).to.equal(50);
     });
   });
-
-  describe("Mint and Burn", function (){
-    it("Should mint tokens", async function (){
-        await deBeToken.mint(addr1.address, 5000);
-        const addr1Balance = await deBeToken.balanceOf(addr1.address);
-        expect(addr1Balance).to.equal(5000);
-    })
-
-    it("Should BURN! tokens", async function (){
-        await deBeToken.burn(5000);
-        const addr1Balance = await deBeToken.balanceOf(addr1.address);
-        expect(addr1Balance).to.equal(0);
-    })
-
-  })
-
-
 });

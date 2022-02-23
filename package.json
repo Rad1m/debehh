@@ -2,7 +2,8 @@
   "name": "hardhat-project",
   "dependencies": {
     "@openzeppelin/contracts": "^4.5.0",
-    "@openzeppelin/hardhat-upgrades": "^1.14.0"
+    "@openzeppelin/hardhat-upgrades": "^1.14.0",
+    "chai-bignumber": "^3.0.0"
   },
   "devDependencies": {
     "earljs": "^0.2.1"
