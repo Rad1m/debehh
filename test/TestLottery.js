@@ -19,12 +19,13 @@ describe.only("Betting Contract", function () {
   });
 
   describe("Enter lottery", function(){
-    it("Should return staked amount", async function(){
+    it("Should return staker info", async function(){
     //lottery.enter({"from": get_account(), "value": lottery.getEntranceFee()})
     await lottery.enterLottery(addr2.address, 50, "ARSENAL");
     const stakedAmount = await lottery.balances(addr2.address);
-    console.log("Retrun balances:", stakedAmount.amount);
+    const playersArray = await lottery.players;
     expect(stakedAmount.amount).to.equal(50);
+    expect(stakedAmount.betOnThis).to.equal("ARSENAL");
     });
   });
 
@@ -34,4 +35,13 @@ describe.only("Betting Contract", function () {
       expect(betAmount).to.equal(100);
     });
   });
+
+  describe("Get winners", function(){
+    it("Should get winner's amount", async function(){
+      await lottery.enterLottery(addr2.address, 50, "ARSENAL");
+      const winningAmount =  await lottery.getWinners(addr2.address);
+      console.log("Receiving:", winningAmount );
+      //expect(winningAmount).to.equal(50);
+    })
+  })
 });

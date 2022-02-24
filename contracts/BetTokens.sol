@@ -45,6 +45,8 @@ contract Lottery is Ownable {
        balances[_staker].blockNumber = block.number;
        console.log("Sender address is %s :", msg.sender);
        console.log("Staker address is %s :", _staker);
+       console.log("Staker amount is %s :", _amount);
+       console.log("Players array size is %s :", players.length);
    }
 
    function getEntranceFee(uint256 _betAmount) public pure returns (uint256) {
@@ -65,8 +67,12 @@ contract Lottery is Ownable {
        lottery_state = LOTTERY_STATE.CALCULATING_WINNER;
    }
 
-   function getWinners(address _staker) public returns (uint256) {
+   function closeLottery() public onlyOwner {
        lottery_state = LOTTERY_STATE.CLOSED;
+   }
+
+   function getWinners(address _staker) view public returns (uint) {
+       console.log("Returning:", balances[_staker].amount);
        return balances[_staker].amount;
    }
 }
