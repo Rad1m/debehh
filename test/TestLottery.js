@@ -21,9 +21,10 @@ describe.only("Betting Contract", function () {
   describe("Enter lottery", function(){
     it("Should return staked amount", async function(){
     //lottery.enter({"from": get_account(), "value": lottery.getEntranceFee()})
-    await lottery.enterLottery(addr2.address, 50);
+    await lottery.enterLottery(addr2.address, 50, "ARSENAL");
     const stakedAmount = await lottery.balances(addr2.address);
-    expect(stakedAmount).to.equal(50);
+    console.log("Retrun balances:", stakedAmount.amount);
+    expect(stakedAmount.amount).to.equal(50);
     });
   });
 

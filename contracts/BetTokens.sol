@@ -10,7 +10,14 @@ import "hardhat/console.sol";
 // Winners
 
 contract Lottery is Ownable {
-    mapping(address => uint) public balances;
+    
+    struct PlayersStruct {
+        uint amount;
+        string betOnThis;
+        uint blockNumber;
+    }
+    mapping(address => PlayersStruct) public balances;
+    
     address payable[] public players;
     address payable[] public winners;
     uint256 public entryFee;
@@ -28,12 +35,14 @@ contract Lottery is Ownable {
 
     constructor() public {}
 
-   function enterLottery(address _staker, uint256 _amount) public payable {
+   function enterLottery(address _staker, uint256 _amount, string memory _betOnThis) public payable {
        require(lottery_state == LOTTERY_STATE.OPEN);
        require(_amount >= 50, "Minimum bet not reached");
        getEntranceFee(_amount);
        players.push(payable(_staker));
-       balances[_staker] = _amount;
+       balances[_staker].amount = _amount;
+       balances[_staker].betOnThis = _betOnThis;
+       balances[_staker].blockNumber = block.number;
        console.log("Sender address is %s :", msg.sender);
        console.log("Staker address is %s :", _staker);
    }
@@ -56,7 +65,8 @@ contract Lottery is Ownable {
        lottery_state = LOTTERY_STATE.CALCULATING_WINNER;
    }
 
-   function getWinners() public onlyOwner {
+   function getWinners(address _staker) public returns (uint256) {
        lottery_state = LOTTERY_STATE.CLOSED;
+       return balances[_staker].amount;
    }
 }
