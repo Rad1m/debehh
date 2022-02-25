@@ -12,7 +12,7 @@ import "hardhat/console.sol";
 contract Lottery is Ownable {
     
     struct PlayersStruct {
-        uint amount;
+        uint stakedAmount;
         string betOnThis;
         uint blockNumber;
     }
@@ -47,7 +47,7 @@ contract Lottery is Ownable {
        players.push(payable(_staker));
 
        // add player to the struct
-       balances[_staker].amount = _amount;
+       balances[_staker].stakedAmount += (_amount - entryFee);
        balances[_staker].betOnThis = _betOnThis;
        balances[_staker].blockNumber = block.number;
 
@@ -83,7 +83,27 @@ contract Lottery is Ownable {
    function calculatePrize(address _staker) public view returns(uint256 winPrize){
        // the size of prize is proportional to the size of stake
        // change logic here
-       winPrize = totalValueLocked/winners.length;
+
+       // calculate percentage of total pool
+       uint256 shareOfPool = 100*balances[_staker].stakedAmount / totalValueLocked;
+
+        console.log("Total Value Locked is %s :", totalValueLocked);
+        console.log("Staked amount is %s :", balances[_staker].stakedAmount);
+        console.log("shareOfPool is %s%:", shareOfPool);
+
+        // pool prize is TVL but we have equal or less winners than total players
+        // winPrize is TVL divided by number of winner multiplied by share of pool
+       if (winners.length==1){
+           winPrize =   ( totalValueLocked / winners.length); // only one winner, get entire pool
+           console.log("Winner prize is 100% which is %s", winPrize );
+       } else if (winners.length>1){
+           winPrize =   ( totalValueLocked / winners.length) * shareOfPool / 100; // divide by 100 to get percentage
+           console.log("Winner prize is %s% which is %s", shareOfPool, winPrize );
+       }
+       else {
+           winPrize = 0;
+       }
+       
    }
 
    function getWinners(address _staker) public payable {
