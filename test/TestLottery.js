@@ -23,25 +23,33 @@ describe.only("Betting Contract", function () {
     //lottery.enter({"from": get_account(), "value": lottery.getEntranceFee()})
     await lottery.enterLottery(addr2.address, 50, "ARSENAL");
     const stakedAmount = await lottery.balances(addr2.address);
-    const playersArray = await lottery.players;
+    // Assert
     expect(stakedAmount.amount).to.equal(50);
     expect(stakedAmount.betOnThis).to.equal("ARSENAL");
     });
   });
 
+  // tested and works
   describe("Get entrance fee", function () {
     it("Should check the betting amount", async function () {
-      const betAmount = await lottery.getEntranceFee(100);
-      expect(betAmount).to.equal(100);
+      const fee = await lottery.getEntranceFee(250);
+      expect(fee).to.equal(12);
     });
   });
 
-  describe("Get winners", function(){
-    it("Should get winner's amount", async function(){
+  describe("Calculate prize", function (){
+    it("Should get total value locked divided amongst all winners proportionally", async function(){
+      //Arrange
       await lottery.enterLottery(addr2.address, 50, "ARSENAL");
-      const winningAmount =  await lottery.getWinners(addr2.address);
-      console.log("Receiving:", winningAmount );
-      //expect(winningAmount).to.equal(50);
+      
+      // Act
+      await lottery.getWinners(addr1.address);
+      await lottery.getWinners(addr2.address);
+      const prize = await lottery.calculatePrize(addr1.address);
+      
+      // Asser
+      expect(prize).to.equal(24);
     })
   })
+
 });

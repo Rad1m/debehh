@@ -21,7 +21,8 @@ contract Lottery is Ownable {
     address payable[] public players;
     address payable[] public winners;
     uint256 public entryFee;
-    uint256 public betValue;
+    uint256 public winPrize;
+    uint256 public totalValueLocked;
 
     enum LOTTERY_STATE {
         OPEN,
@@ -37,22 +38,30 @@ contract Lottery is Ownable {
 
    function enterLottery(address _staker, uint256 _amount, string memory _betOnThis) public payable {
        require(lottery_state == LOTTERY_STATE.OPEN);
-       require(_amount >= 50, "Minimum bet not reached");
-       getEntranceFee(_amount);
+
+       // get fee for the team
+       entryFee = getEntranceFee(_amount);
+       // stake the token here
+
+       // add player to the array
        players.push(payable(_staker));
+
+       // add player to the struct
        balances[_staker].amount = _amount;
        balances[_staker].betOnThis = _betOnThis;
        balances[_staker].blockNumber = block.number;
-       console.log("Sender address is %s :", msg.sender);
-       console.log("Staker address is %s :", _staker);
-       console.log("Staker amount is %s :", _amount);
-       console.log("Players array size is %s :", players.length);
+
+       // update total value locked
+       totalValueLocked += (_amount-entryFee);
+
+       console.log("Total Value Locked is %s :", totalValueLocked);
    }
 
-   function getEntranceFee(uint256 _betAmount) public pure returns (uint256) {
+   function getEntranceFee(uint256 _betAmount) public pure returns(uint entryFee){
        // do some rules to enter here
-       uint256 minimumBet = _betAmount;
-       return minimumBet;
+       uint256 minimumBet = 50;
+       require(_betAmount >= minimumBet, "Minimum bet not reached");
+       entryFee = _betAmount * 5 / 100; // 5%
    }
 
    function startLottery() public onlyOwner {
@@ -71,8 +80,15 @@ contract Lottery is Ownable {
        lottery_state = LOTTERY_STATE.CLOSED;
    }
 
-   function getWinners(address _staker) view public returns (uint) {
-       console.log("Returning:", balances[_staker].amount);
-       return balances[_staker].amount;
+   function calculatePrize(address _staker) public view returns(uint256 winPrize){
+       // the size of prize is proportional to the size of stake
+       // change logic here
+       winPrize = totalValueLocked/winners.length;
+   }
+
+   function getWinners(address _staker) public payable {
+       // iterate through players and add winners
+       // this could be gas expensive
+       winners.push(payable(_staker));
    }
 }
