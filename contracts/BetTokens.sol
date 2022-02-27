@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "hardhat/console.sol";
 
@@ -16,13 +18,21 @@ contract Lottery is Ownable {
         string betOnThis;
         uint blockNumber;
     }
+    // mapping players to know stake amount and what they bet on
     mapping(address => PlayersStruct) public balances;
+
+    // mapping token address -> staker address -> amount
+    mapping(address => mapping(address => uint256)) public stakingBalance;
+    mapping(address => uint256) public uniqueTokensStaked;
     
-    address payable[] public players;
-    address payable[] public winners;
-    uint256 public entryFee;
-    uint256 public winPrize;
-    uint256 public totalValueLocked;
+    address payable[] public players; // list of all players
+    address payable[] public winners; // list of winners
+    uint256 public entryFee; // entry fee goes to team and treasury
+    uint256 public winPrize; // prize for winners
+    uint256 public totalValueLocked; // total valu elocked for all stakes and tokens
+    address[] public allowedTokens; // only allowed tokens can be used for betting
+
+    
 
     enum LOTTERY_STATE {
         OPEN,
@@ -34,10 +44,15 @@ contract Lottery is Ownable {
     uint256 public fee;
     bytes32 public keyhash;
 
-    constructor() public {}
+    //constructor to know address of token for rewards
+    constructor() public {
+        
+    }
 
+   // stake tokens
    function enterLottery(address _staker, uint256 _amount, string memory _betOnThis) public payable {
        require(lottery_state == LOTTERY_STATE.OPEN);
+       require(tokenIsAllowed(_token), "Token is currently not allowed");
 
        // get fee for the team
        entryFee = getEntranceFee(_amount);
@@ -63,6 +78,19 @@ contract Lottery is Ownable {
        require(_betAmount >= minimumBet, "Minimum bet not reached");
        entryFee = _betAmount * 5 / 100; // 5%
    }
+
+   function tokenIsAllowed(address _token) public returns (bool) {
+        for (
+            uint256 allowedTokensIndex = 0;
+            allowedTokensIndex < allowedTokens.length;
+            allowedTokensIndex++
+        ) {
+            if (allowedTokens[allowedTokensIndex] == _token) {
+                return true;
+            }
+        }
+        return false;
+    }
 
    function startLottery() public onlyOwner {
         require(
@@ -103,8 +131,40 @@ contract Lottery is Ownable {
        else {
            winPrize = 0;
        }
-       
    }
+
+   function mintAndBurnPrize(address _staker) public view returns(uint256 value){
+       // assess if player is a winner
+       // if winner, mint tokens
+       // if loser, burn staked tokens
+       bool winner = true;
+       if (winner) {
+           // mint tokens
+           // return original stake
+
+       } else {
+           // burn tokens here
+       }
+
+   }
+
+   function getUserTVL(address _user) public view returns (uint256) {
+        uint256 totalValue = 0;
+        require(uniqueTokensStaked[_user] > 0, "No tokens staked!");
+        for (
+            uint256 allowedTokensIndex = 0;
+            allowedTokensIndex < allowedTokens.length;
+            allowedTokensIndex++
+        ) {
+            totalValue =
+                totalValue +
+                getUserSingleTokenValue(
+                    _user,
+                    allowedTokens[allowedTokensIndex]
+                );
+        }
+        return totalValue;
+    }
 
    function getWinners(address _staker) public payable {
        // iterate through players and add winners

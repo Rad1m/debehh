@@ -14,6 +14,12 @@ describe.only("Betting Contract", function () {
   let addrs;
 
   beforeEach(async function(){
+    // Get the token contract
+    const Token = await ethers.getContractFactory("DeBeToken");
+    const deBeToken = await Token.deploy();
+    await deBeToken.deployed();
+    //deBeToken = await Token.attach("0x..." );
+    
     // Get the ContractFactory and Signers here.
     Lottery = await ethers.getContractFactory("Lottery");
     [owner, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
