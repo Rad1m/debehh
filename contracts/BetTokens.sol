@@ -27,7 +27,6 @@ contract Lottery is Ownable {
     
     address payable[] public players; // list of all players
     address payable[] public winners; // list of winners
-    uint256 public entryFee; // entry fee goes to team and treasury
     uint256 public winPrize; // prize for winners
     uint256 public totalValueLocked; // total valu elocked for all stakes and tokens
     address[] public allowedTokens; // only allowed tokens can be used for betting
@@ -41,14 +40,12 @@ contract Lottery is Ownable {
     } // enum states are represented by numbers 0,1,2,...
 
     LOTTERY_STATE public lottery_state;
-    uint256 public fee;
-    bytes32 public keyhash;
 
     //constructor to know address of token for rewards
     ERC20 public deBeToken;
-    constructor(address _deBeTokenAddress) public {
-        deBeToken = ERC20(_deBeTokenAddress);
-    }
+    // constructor(address _deBeTokenAddress) public {
+    //     deBeToken = ERC20(_deBeTokenAddress);
+    // }
 
    // staking tokens means entering the lottery, user can unstake their tokens for as long as the match has not started yet
    function enterLottery(address _staker, uint256 _amount, string memory _betOnThis) public payable {
@@ -56,42 +53,33 @@ contract Lottery is Ownable {
        //require(tokenIsAllowed(_token), "Token is currently not allowed");
 
        // get fee for the team
-       entryFee = getEntranceFee(_amount);
+       uint fee = getEntranceFee(_amount);
+       uint stakeAmount = _amount - fee;
+    //    deBeToken.transferFrom(_staker, address(this), fee); // here should be treasury wallet
+
        // stake the token here
+    //    deBeToken.transferFrom(_staker, address(this), stakeAmount);
 
        // add player to the array
        players.push(payable(_staker));
 
        // add player to the struct
-       balances[_staker].stakedAmount += (_amount - entryFee);
+       balances[_staker].stakedAmount += stakeAmount;
        balances[_staker].betOnThis = _betOnThis;
        balances[_staker].blockNumber = block.number;
 
        // update total value locked
-       totalValueLocked += (_amount-entryFee);
+       totalValueLocked += stakeAmount;
 
        console.log("Total Value Locked is %s :", totalValueLocked);
    }
 
    function getEntranceFee(uint256 _betAmount) public pure returns(uint entryFee){
        // do some rules to enter here
-       uint256 minimumBet = 50;
+       uint minimumBet = 50;
        require(_betAmount >= minimumBet, "Minimum bet not reached");
-       entryFee = _betAmount * 5 / 100; // 5%
+       return entryFee = _betAmount * 5 / 100; // 5%
    }
-
-   function tokenIsAllowed(address _token) public returns (bool) {
-        for (
-            uint256 allowedTokensIndex = 0;
-            allowedTokensIndex < allowedTokens.length;
-            allowedTokensIndex++
-        ) {
-            if (allowedTokens[allowedTokensIndex] == _token) {
-                return true;
-            }
-        }
-        return false;
-    }
 
    function startLottery() public onlyOwner {
         require(
