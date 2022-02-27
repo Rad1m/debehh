@@ -7,31 +7,39 @@ describe.only("Betting Contract", function () {
   // A common pattern is to declare some variables, and assign them in the
   // `before` and `beforeEach` callbacks.
   let Lottery;
+  let Token;
+  let token;
   let owner;
   let addr1;
   let addr2;
   let addr3;
   let addrs;
 
-  beforeEach(async function(){
-    // Get the token contract
-    const Token = await ethers.getContractFactory("DeBeToken");
-    const deBeToken = await Token.deploy();
-    await deBeToken.deployed();
-    //deBeToken = await Token.attach("0x..." );
-    
+  beforeEach(async function(){    
     // Get the ContractFactory and Signers here.
+    Token = await ethers.getContractFactory("DeBeToken");
+    token = await Token.deploy();
+    await token.deployed();
+    
     Lottery = await ethers.getContractFactory("Lottery");
     [owner, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
-    lottery = await Lottery.deploy();
+    lottery = await Lottery.deploy(token.address);
     await lottery.deployed();
   });
 
   describe("Enter lottery", function(){
     it("Should return staker info", async function(){
-    //lottery.enter({"from": get_account(), "value": lottery.getEntranceFee()})
+    // ARRANGE
+    token.transfer(addr2.address, 5000);
+    console.log("Owner balance %s", await token.balanceOf(owner.address));
+    console.log("Addr2 balance %s", await token.balanceOf(addr2.address));
+
+    // ACT
+    // await token.approve(lottery.address, 50);
+    await token.approve(token.address, 50);
     await lottery.enterLottery(addr2.address, 50, "ARSENAL");
     const stakedAmount = await lottery.balances(addr2.address);
+    
     // Assert
     expect(stakedAmount.stakedAmount).to.equal(48); // there is 5% fee
     expect(stakedAmount.betOnThis).to.equal("ARSENAL");
@@ -39,14 +47,20 @@ describe.only("Betting Contract", function () {
   });
 
   // tested and works
-  describe("Get entrance fee", function () {
+  describe.skip("Get entrance fee", function () {
     it("Should check the betting amount", async function () {
+      // ARRANGE
+      await deBeToken.transfer(addr2.address, 500);
+
+      // ACT
       const fee = await lottery.getEntranceFee(250);
+      
+      // ASSERT
       expect(fee).to.equal(12);
     });
   });
 
-  describe("Calculate prize", function (){    
+  describe.skip("Calculate prize", function (){    
     it("Should get total value locked divided amongst all winners proportionally", async function(){
       // arrange
       await lottery.enterLottery(addr1.address, 500*10**9, "ARSENAL");

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
+import "./DeBeToken.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -12,6 +13,12 @@ import "hardhat/console.sol";
 // Winners
 
 contract Lottery is Ownable {
+
+    DeBeToken token;
+
+    constructor(DeBeToken _token) public {
+        token = _token;
+    }
     
     struct PlayersStruct {
         uint stakedAmount;
@@ -31,8 +38,6 @@ contract Lottery is Ownable {
     uint256 public totalValueLocked; // total valu elocked for all stakes and tokens
     address[] public allowedTokens; // only allowed tokens can be used for betting
 
-    
-
     enum LOTTERY_STATE {
         OPEN,
         CLOSED,
@@ -41,24 +46,19 @@ contract Lottery is Ownable {
 
     LOTTERY_STATE public lottery_state;
 
-    //constructor to know address of token for rewards
-    ERC20 public deBeToken;
-    // constructor(address _deBeTokenAddress) public {
-    //     deBeToken = ERC20(_deBeTokenAddress);
-    // }
-
    // staking tokens means entering the lottery, user can unstake their tokens for as long as the match has not started yet
    function enterLottery(address _staker, uint256 _amount, string memory _betOnThis) public payable {
        require(lottery_state == LOTTERY_STATE.OPEN);
        //require(tokenIsAllowed(_token), "Token is currently not allowed");
 
        // get fee for the team
+       require(token.approve(address(this), _amount), 'Token approve failed');
        uint fee = getEntranceFee(_amount);
        uint stakeAmount = _amount - fee;
-    //    deBeToken.transferFrom(_staker, address(this), fee); // here should be treasury wallet
+       token.transferFrom(_staker, address(this), fee); // here should be treasury wallet
 
        // stake the token here
-    //    deBeToken.transferFrom(_staker, address(this), stakeAmount);
+       token.transferFrom(_staker, address(this), stakeAmount);
 
        // add player to the array
        players.push(payable(_staker));
@@ -122,7 +122,7 @@ contract Lottery is Ownable {
        }
    }
 
-   function mintAndBurnPrize(address _staker) public view returns(uint256 value){
+   function mintAndBurnPrize(address _staker) public onlyOwner {
        // assess if player is a winner
        // if winner, mint tokens
        // if loser, burn staked tokens
@@ -130,6 +130,8 @@ contract Lottery is Ownable {
        if (winner) {
            // mint tokens
            // return original stake
+           uint amount = calculatePrize(_staker);
+           token.mint(_staker, amount);
 
        } else {
            // burn tokens here
