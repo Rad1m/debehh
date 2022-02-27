@@ -45,14 +45,15 @@ contract Lottery is Ownable {
     bytes32 public keyhash;
 
     //constructor to know address of token for rewards
-    constructor() public {
-        
+    ERC20 public deBeToken;
+    constructor(address _deBeTokenAddress) public {
+        deBeToken = ERC20(_deBeTokenAddress);
     }
 
-   // stake tokens
+   // staking tokens means entering the lottery, user can unstake their tokens for as long as the match has not started yet
    function enterLottery(address _staker, uint256 _amount, string memory _betOnThis) public payable {
        require(lottery_state == LOTTERY_STATE.OPEN);
-       require(tokenIsAllowed(_token), "Token is currently not allowed");
+       //require(tokenIsAllowed(_token), "Token is currently not allowed");
 
        // get fee for the team
        entryFee = getEntranceFee(_amount);
@@ -147,24 +148,6 @@ contract Lottery is Ownable {
        }
 
    }
-
-   function getUserTVL(address _user) public view returns (uint256) {
-        uint256 totalValue = 0;
-        require(uniqueTokensStaked[_user] > 0, "No tokens staked!");
-        for (
-            uint256 allowedTokensIndex = 0;
-            allowedTokensIndex < allowedTokens.length;
-            allowedTokensIndex++
-        ) {
-            totalValue =
-                totalValue +
-                getUserSingleTokenValue(
-                    _user,
-                    allowedTokens[allowedTokensIndex]
-                );
-        }
-        return totalValue;
-    }
 
    function getWinners(address _staker) public payable {
        // iterate through players and add winners
