@@ -47,12 +47,16 @@ contract Lottery is Ownable {
     LOTTERY_STATE public lottery_state;
 
    // staking tokens means entering the lottery, user can unstake their tokens for as long as the match has not started yet
-   function enterLottery(address _staker, uint256 _amount, string memory _betOnThis) public payable {
+   function enterLottery(string memory _betOnThis) public payable {
        require(lottery_state == LOTTERY_STATE.OPEN);
        //require(tokenIsAllowed(_token), "Token is currently not allowed");
 
+       address _staker = msg.sender;
+       uint _amount = msg.value;
+
+       console.log("Value sent %s from %s", _amount, _staker);
+
        // get fee for the team
-       require(token.approve(address(this), _amount), 'Token approve failed');
        uint fee = getEntranceFee(_amount);
        uint stakeAmount = _amount - fee;
        token.transferFrom(_staker, address(this), fee); // here should be treasury wallet
