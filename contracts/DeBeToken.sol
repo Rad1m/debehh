@@ -13,7 +13,7 @@ contract DeBeToken is ERC20, ERC20Burnable, ERC20Snapshot, Ownable, ERC20Permit,
         ERC20("Decentralized Betting Token", "DEBE")
         ERC20Permit("Decentralized Betting Token")
     {
-        _mint(msg.sender, 1000000000 * 10 ** decimals());
+        _mint(msg.sender, 1_000_000_000_000 * 10 ** decimals());
     }
 
     function snapshot() public onlyOwner {
