@@ -23,6 +23,8 @@ contract Lottery is Ownable {
     struct PlayersStruct {
         uint stakedAmount;
         string betOnThis;
+        bool winner;
+        bool rewarded;
         uint blockNumber;
     }
     // mapping players to know stake amount and what they bet on
@@ -71,6 +73,8 @@ contract Lottery is Ownable {
        balances[_staker].stakedAmount += stakeAmount;
        balances[_staker].betOnThis = _betOnThis;
        balances[_staker].blockNumber = block.number;
+       balances[_staker].winner = false;
+       balances[_staker].rewarded = false;
 
        // update total value locked
        totalValueLocked += stakeAmount;
@@ -126,22 +130,39 @@ contract Lottery is Ownable {
        }
    }
 
-   function mintAndBurnPrize(address _staker) public onlyOwner {
+    // THIS IS NOT FINISHED
+   function mintAndBurnPrize(bool winner) public {
        // assess if player is a winner
        // if winner, mint tokens
        // if loser, burn staked tokens
-       bool winner = true;
-       if (winner) {
-           // mint tokens
-           // return original stake
-           uint amount = calculatePrize(_staker);
-           token.mint(_staker, amount);
+       
+       // get staked amount
+       address _staker = msg.sender;
+       uint amount = getUserTVL(_staker);
+       require(balances[_staker].rewarded == false, "Reward already paid out");
 
+       if (winner) {
+           // return original stake plus mint same amount
+           // this way user gets 2x reward
+           console.log("mintAndBurnPrize amount is %",amount );
+           token.transfer(_staker, amount);
+           // remove player from mapping
+           balances[_staker].stakedAmount = 0;
+           balances[_staker].rewarded = true;
        } else {
            // burn tokens here
+           token.burnFrom(_staker, amount);
+           balances[_staker].stakedAmount = 0;
+           balances[_staker].rewarded = true;
        }
 
    }
+
+    function getUserTVL(address _user) public view returns(uint){
+        uint totalValue = 0;
+        totalValue = balances[_user].stakedAmount;
+        return totalValue;
+    }
 
    function getWinners(address _staker) public payable {
        // iterate through players and add winners
