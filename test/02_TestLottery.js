@@ -88,16 +88,26 @@ describe.only("Betting Contract", function () {
     });
   });
 
-  describe.skip("Calculate prize", function (){    
-    it("Should get total value locked divided amongst all winners proportionally", async function(){
+  describe("Calculate prize", function (){    
+    it("Should get winning amount", async function(){
       // arrange
-      await lottery.enterLottery("ARSENAL");
-      await lottery.enterLottery("ARSENAL");
-      await lottery.enterLottery("ARSENAL");
-      await lottery.getWinners(addr3.address);
-      await lottery.getWinners(addr2.address);
+      token.transfer(addr1.address, ethers.utils.parseEther("0.05"));
+      token.transfer(addr2.address, ethers.utils.parseEther("0.05"));
+      token.transfer(addr3.address, ethers.utils.parseEther("0.05"));
+
+      await token.connect(addr1).approve(lottery.address, ethers.utils.parseEther("0.05"));
+      await token.connect(addr2).approve(lottery.address, ethers.utils.parseEther("0.05"));
+      await token.connect(addr3).approve(lottery.address, ethers.utils.parseEther("0.05"));
+      
+      await lottery.connect(addr1).enterLottery("BARCELONA", {value: ethers.utils.parseEther("0.01") });
+      await lottery.connect(addr2).enterLottery("ARSENAL", {value: ethers.utils.parseEther("0.01") });
+      await lottery.connect(addr3).enterLottery("ARSENAL", {value: ethers.utils.parseEther("0.04") });
+      
+      await lottery.connect(owner).endLottery();
+      await lottery.connect(owner).getWinners("BARCELONA");
+      
       // Act
-      const prize = await lottery.calculatePrize(addr3.address);
+      const prize = await lottery.connect(addr2).calculatePrize();
       
       // Assert
       console.log("Calculated prize as share of pool: ", prize);
