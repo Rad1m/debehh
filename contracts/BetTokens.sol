@@ -78,8 +78,6 @@ contract Lottery is Ownable {
 
        // update total value locked
        totalValueLocked += stakeAmount;
-
-       console.log("Total Value Locked is %s :", totalValueLocked);
    }
 
    function getEntranceFee(uint256 _betAmount) public pure returns(uint entryFee){
@@ -110,24 +108,17 @@ contract Lottery is Ownable {
        // change logic here
        address staker = msg.sender;
 
-       // calculate percentage of total pool
-        console.log("Total Value Locked is %s :", totalValueLocked);
-        console.log("Player's staked amount is %s :", balances[staker].stakedAmount);
-
         // pool prize is TVL but we have equal or less winners than total players
        if (winnerList.length == 1){
            winAmount =   totalValueLocked; // only one winner, get entire pool
-           console.log("Winner prize is 100% which is %s", winAmount);
        } else if (winnerList.length > 1){
            uint weight = balances[staker].stakedAmount * 10000 /winPool;
            winAmount = ((totalValueLocked - winPool) * weight)/10000;
            winAmount = winAmount + balances[staker].stakedAmount;
-           console.log("Winner prize is %s% which is %s", weight, winAmount );
        }
        else {
            winAmount = 0;
        }
-       console.log("Retrun winAmount %s", winAmount );
        return winAmount;
    }
 
@@ -188,7 +179,6 @@ contract Lottery is Ownable {
        for (uint i=0; i<winnerList.length; i++) {
             winPool += balances[winnerList[i]].stakedAmount;
         }
-        console.log("winPool is %s", winPool);
         closeLottery();
    }
 }

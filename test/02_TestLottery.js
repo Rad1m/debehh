@@ -104,7 +104,7 @@ describe.only("Betting Contract", function () {
       await lottery.connect(addr3).enterLottery("ARSENAL", {value: ethers.utils.parseEther("0.04") });
       
       await lottery.connect(owner).endLottery();
-      await lottery.connect(owner).getWinners("BARCELONA");
+      await lottery.connect(owner).getWinners("ARSENAL");
       
       // Act
       const prize = await lottery.connect(addr2).calculatePrize();
