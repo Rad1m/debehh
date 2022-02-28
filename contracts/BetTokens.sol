@@ -165,17 +165,30 @@ contract Lottery is Ownable {
         return totalValue;
     }
 
-    // THIS IS HELPER FUNCTION
-    // NOT IMPLEMENTED
-   function getWinners(address _staker) public payable {
-       // iterate through players and add winners
-       // this could be gas expensive
-       winnerList.push(payable(_staker));
+   function getWinners(string memory _result) public onlyOwner {
+       // iterate through players and add winners to array
+       // this is gas expensive
+       require(lottery_state == LOTTERY_STATE.CALCULATING_WINNER, "Lottery needs to finish first");
+       for (uint i=0; i<playerList.length; i++) {
+
+           if(keccak256(abi.encodePacked(balances[playerList[i]].betOnThis)) == keccak256(abi.encodePacked(_result)))
+           {
+               balances[playerList[i]].winner = true;
+               winnerList.push(payable(playerList[i]));
+           } else {
+               balances[playerList[i]].winner = false;
+           }
+        }
+        console.log("Number of winners is %s", winnerList.length);
+        getWinPool();
    }
 
-   function getWinPool () public {
+   function getWinPool () public onlyOwner {
+       require(lottery_state == LOTTERY_STATE.CALCULATING_WINNER, "Lottery needs to finish first");
        for (uint i=0; i<winnerList.length; i++) {
             winPool += balances[winnerList[i]].stakedAmount;
         }
+        console.log("winPool is %s", winPool);
+        closeLottery();
    }
 }
