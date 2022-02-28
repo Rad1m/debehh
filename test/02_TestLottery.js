@@ -27,7 +27,34 @@ describe.only("Betting Contract", function () {
     await lottery.deployed();
   });
 
-  describe("Enter lottery", function(){
+  describe.skip("Get user TVL", function(){
+    it("Should get user's staked amount", async function(){
+      // ARRANGE
+      token.transfer(addr2.address, ethers.utils.parseEther("0.5"));
+      await token.connect(addr2).approve(lottery.address, ethers.utils.parseEther("0.05"));
+      // ACT
+      await lottery.connect(addr2).enterLottery("ARSENAL", {value: ethers.utils.parseEther("0.05") });
+      const userTVL = await lottery.getUserTVL(addr2.address);
+
+      // ASSERT
+      console.log("Winner prize is %s", userTVL);
+    })
+  })
+
+  describe.skip("Mint and Burn reward", function(){
+    it("Should mint tokens for winner", async function(){
+      // ARRANGE
+      token.transfer(addr2.address, ethers.utils.parseEther("0.5"));
+      await token.connect(addr2).approve(lottery.address, ethers.utils.parseEther("0.05"));
+      await lottery.connect(addr2).enterLottery("ARSENAL", {value: ethers.utils.parseEther("0.05") });
+      // ACT
+      await lottery.connect(addr2).mintAndBurnPrize(true);
+      // ASSERT
+      expect(await token.balanceOf(addr2.address)).to.equal(ethers.utils.parseEther("0.545"))
+    })
+  })
+
+  describe.skip("Enter lottery", function(){
     it("Should return staker info", async function(){
     // ARRANGE
     token.transfer(addr2.address, ethers.utils.parseEther("0.5"));
