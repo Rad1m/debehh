@@ -34,9 +34,9 @@ contract Lottery is Ownable {
     mapping(address => mapping(address => uint256)) public stakingBalance;
     mapping(address => uint256) public uniqueTokensStaked;
     
-    address payable[] public players; // list of all players
-    address payable[] public winners; // list of winners
-    uint256 public winPrize; // prize for winners
+    address payable[] public playerList; // list of all players
+    address payable[] public winnerList; // list of winners
+    uint256 public winPool; // prize for winners
     uint256 public totalValueLocked; // total valu elocked for all stakes and tokens
     address[] public allowedTokens; // only allowed tokens can be used for betting
 
@@ -67,7 +67,7 @@ contract Lottery is Ownable {
        token.transferFrom(_staker, address(this), stakeAmount);
 
        // add player to the array
-       players.push(payable(_staker));
+       playerList.push(payable(_staker));
 
        // add player to the struct
        balances[_staker].stakedAmount += stakeAmount;
@@ -105,29 +105,30 @@ contract Lottery is Ownable {
        lottery_state = LOTTERY_STATE.CLOSED;
    }
 
-   function calculatePrize(address _staker) public view returns(uint256 winPrize){
+   function calculatePrize() public view returns(uint256 winAmount){
        // the size of prize is proportional to the size of stake
        // change logic here
+       address staker = msg.sender;
 
        // calculate percentage of total pool
-       uint256 shareOfPool = 100*balances[_staker].stakedAmount / totalValueLocked;
-
         console.log("Total Value Locked is %s :", totalValueLocked);
-        console.log("Staked amount is %s :", balances[_staker].stakedAmount);
-        console.log("shareOfPool is %s%:", shareOfPool);
+        console.log("Player's staked amount is %s :", balances[staker].stakedAmount);
 
         // pool prize is TVL but we have equal or less winners than total players
-        // winPrize is TVL divided by number of winner multiplied by share of pool
-       if (winners.length==1){
-           winPrize =   ( totalValueLocked / winners.length); // only one winner, get entire pool
-           console.log("Winner prize is 100% which is %s", winPrize );
-       } else if (winners.length>1){
-           winPrize =   ( totalValueLocked / winners.length) * shareOfPool / 100; // divide by 100 to get percentage
-           console.log("Winner prize is %s% which is %s", shareOfPool, winPrize );
+       if (winnerList.length == 1){
+           winAmount =   totalValueLocked; // only one winner, get entire pool
+           console.log("Winner prize is 100% which is %s", winAmount);
+       } else if (winnerList.length > 1){
+           uint weight = balances[staker].stakedAmount * 10000 /winPool;
+           winAmount = ((totalValueLocked - winPool) * weight)/10000;
+           winAmount = winAmount + balances[staker].stakedAmount;
+           console.log("Winner prize is %s% which is %s", weight, winAmount );
        }
        else {
-           winPrize = 0;
+           winAmount = 0;
        }
+       console.log("Retrun winAmount %s", winAmount );
+       return winAmount;
    }
 
     // THIS IS NOT FINISHED
@@ -164,9 +165,17 @@ contract Lottery is Ownable {
         return totalValue;
     }
 
+    // THIS IS HELPER FUNCTION
+    // NOT IMPLEMENTED
    function getWinners(address _staker) public payable {
        // iterate through players and add winners
        // this could be gas expensive
-       winners.push(payable(_staker));
+       winnerList.push(payable(_staker));
+   }
+
+   function getWinPool () public {
+       for (uint i=0; i<winnerList.length; i++) {
+            winPool += balances[winnerList[i]].stakedAmount;
+        }
    }
 }
