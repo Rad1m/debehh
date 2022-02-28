@@ -88,7 +88,7 @@ describe.only("Betting Contract", function () {
     });
   });
 
-  describe.skip("Calculate prize", function (){    
+  describe("Calculate prize", function (){    
     it("Should get total value locked divided amongst all winners proportionally", async function(){
       // arrange
       await lottery.enterLottery("ARSENAL");
