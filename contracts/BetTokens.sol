@@ -53,28 +53,26 @@ contract Lottery is Ownable {
        require(lottery_state == LOTTERY_STATE.OPEN);
        //require(tokenIsAllowed(_token), "Token is currently not allowed");
 
-       address _staker = msg.sender;
-       uint _amount = msg.value;
-
-       console.log("Value sent %s from %s", _amount, _staker);
+       address staker = msg.sender;
+       uint amount = msg.value;
 
        // get fee for the team
-       uint fee = getEntranceFee(_amount);
-       uint stakeAmount = _amount - fee;
-       token.transferFrom(_staker, address(this), fee); // here should be treasury wallet
+       uint fee = getEntranceFee(amount);
+       uint stakeAmount = amount - fee;
+       token.transferFrom(staker, address(this), fee); // here should be treasury wallet
 
        // stake the token here
-       token.transferFrom(_staker, address(this), stakeAmount);
+       token.transferFrom(staker, address(this), stakeAmount);
 
        // add player to the array
-       playerList.push(payable(_staker));
+       playerList.push(payable(staker));
 
        // add player to the struct
-       balances[_staker].stakedAmount += stakeAmount;
-       balances[_staker].betOnThis = _betOnThis;
-       balances[_staker].blockNumber = block.number;
-       balances[_staker].winner = false;
-       balances[_staker].rewarded = false;
+       balances[staker].stakedAmount += stakeAmount;
+       balances[staker].betOnThis = _betOnThis;
+       balances[staker].blockNumber = block.number;
+       balances[staker].winner = false;
+       balances[staker].rewarded = false;
 
        // update total value locked
        totalValueLocked += stakeAmount;
@@ -103,21 +101,29 @@ contract Lottery is Ownable {
        lottery_state = LOTTERY_STATE.CLOSED;
    }
 
+   // this will be run every time a user will claim their reward
    function calculatePrize() public view returns(uint256 winAmount){
-       // the size of prize is proportional to the size of stake
-       // change logic here
+       // get player's address
        address staker = msg.sender;
 
-        // pool prize is TVL but we have equal or less winners than total players
+        // The number of winners will be less or equal to number of players
+        // the winners will share the prize among themselves
+        // players who didn't win will lose their stake
+        // the IF condirions are used to save on gas
        if (winnerList.length == 1){
-           winAmount =   totalValueLocked; // only one winner, get entire pool
+           winAmount =   totalValueLocked; // only one winner ==> gets entire pool
        } else if (winnerList.length > 1){
+           // players with higher bets will get higher (weighted) rewards
            uint weight = balances[staker].stakedAmount * 10000 /winPool;
            winAmount = ((totalValueLocked - winPool) * weight)/10000;
            winAmount = winAmount + balances[staker].stakedAmount;
        }
        else {
+           // if nobody has won, then there is no rewards
            winAmount = 0;
+
+           // transfer tokens to treasury
+        //    token.transfer(treaury, totalValueLocked);
        }
        return winAmount;
    }
@@ -129,39 +135,43 @@ contract Lottery is Ownable {
        // if loser, burn staked tokens
        
        // get staked amount
-       address _staker = msg.sender;
-       uint amount = getUserTVL(_staker);
-       require(balances[_staker].rewarded == false, "Reward already paid out");
+       address staker = msg.sender;
+       uint amount = getUserTVL(staker);
+       require(balances[staker].rewarded == false, "Reward already paid out");
 
        if (winner) {
            // return original stake plus mint same amount
            // this way user gets 2x reward
            console.log("mintAndBurnPrize amount is %",amount );
-           token.transfer(_staker, amount);
+           token.transfer(staker, amount);
            // remove player from mapping
-           balances[_staker].stakedAmount = 0;
-           balances[_staker].rewarded = true;
+           balances[staker].stakedAmount = 0;
+           balances[staker].rewarded = true;
        } else {
            // burn tokens here
-           token.burnFrom(_staker, amount);
-           balances[_staker].stakedAmount = 0;
-           balances[_staker].rewarded = true;
+           token.burnFrom(staker, amount);
+           balances[staker].stakedAmount = 0;
+           balances[staker].rewarded = true;
        }
 
    }
 
+    // get how much money user staked
     function getUserTVL(address _user) public view returns(uint){
         uint totalValue = 0;
         totalValue = balances[_user].stakedAmount;
         return totalValue;
     }
 
+    // check how many winners we have
+    // winners wil split the prize among themnselves
    function getWinners(string memory _result) public onlyOwner {
        // iterate through players and add winners to array
        // this is gas expensive
        require(lottery_state == LOTTERY_STATE.CALCULATING_WINNER, "Lottery needs to finish first");
        for (uint i=0; i<playerList.length; i++) {
 
+           // compare strings
            if(keccak256(abi.encodePacked(balances[playerList[i]].betOnThis)) == keccak256(abi.encodePacked(_result)))
            {
                balances[playerList[i]].winner = true;
@@ -170,8 +180,7 @@ contract Lottery is Ownable {
                balances[playerList[i]].winner = false;
            }
         }
-        console.log("Number of winners is %s", winnerList.length);
-        getWinPool();
+        getWinPool(); // get much staked there is among winners
    }
 
    function getWinPool () public onlyOwner {
@@ -179,6 +188,6 @@ contract Lottery is Ownable {
        for (uint i=0; i<winnerList.length; i++) {
             winPool += balances[winnerList[i]].stakedAmount;
         }
-        closeLottery();
+        closeLottery(); // close lottery, rewards can be paid out
    }
 }
