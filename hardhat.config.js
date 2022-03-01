@@ -9,9 +9,7 @@ require("@nomiclabs/hardhat-web3");
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   const accounts = await hre.ethers.getSigners();
 
-  for (const account of accounts) {
-    console.log(account.address);
-  }
+  for (const account of accounts) {console.log(account.address);}
 });
 
 const { API_KOVAN_URL, PRIVATE_KEY } = process.env;
