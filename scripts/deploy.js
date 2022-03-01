@@ -15,12 +15,20 @@ async function main() {
 
   console.log("Token address:", token.address);
 
-  // save the contract's artifacts and address in the frontend directory
-  saveFrontendFiles(token);
+  Lottery = await ethers.getContractFactory("Lottery");
+  lottery = await Lottery.deploy(token.address);
+  await lottery.deployed();
 
+  console.log("Contract address:", lottery.address);
+
+
+
+  // save the contract's artifacts and address in the frontend directory
+  saveFrontendFiles(token, "DeBeToken");
+  saveFrontendFiles(lottery, "Lottery");
 }
 
-function saveFrontendFiles(token) {
+function saveFrontendFiles(contract, contractName) {
   const fs = require("fs");
   const contractsDir = __dirname + "/../frontend/src/contracts";
 
@@ -30,14 +38,14 @@ function saveFrontendFiles(token) {
 
   fs.writeFileSync(
     contractsDir + "/contract-address.json",
-    JSON.stringify({ Token: token.address }, undefined, 2)
+    JSON.stringify({ Contract: contract.address }, undefined, 2)
   );
 
-  const TokenArtifact = artifacts.readArtifactSync("DeBeToken");
+  const ContractArtifact = artifacts.readArtifactSync(contractName);
 
   fs.writeFileSync(
-    contractsDir + "/DeBeToken.json",
-    JSON.stringify(TokenArtifact, null, 2)
+    contractsDir + "/" + contractName +".json",
+    JSON.stringify(ContractArtifact, null, 2)
   );
 }
 
