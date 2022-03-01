@@ -29,16 +29,21 @@ contract Lottery is Ownable {
     }
     // mapping players to know stake amount and what they bet on
     mapping(address => PlayersStruct) public balances;
-
-    // mapping token address -> staker address -> amount
-    mapping(address => mapping(address => uint256)) public stakingBalance;
-    mapping(address => uint256) public uniqueTokensStaked;
     
     address payable[] public playerList; // list of all players
     address payable[] public winnerList; // list of winners
     uint256 public winPool; // prize for winners
     uint256 public totalValueLocked; // total valu elocked for all stakes and tokens
+
+    // THIS FUTURE FEATURE IS NOT YET IMPLEMENTED
+    // FOR NOW ALL PLAYERS CAN USE ONLY DAPP TOKEN
+    // mapping token address -> staker address -> amount
+    /*
+    mapping(address => mapping(address => uint256)) public stakingBalance;
+    mapping(address => uint256) public uniqueTokensStaked;
     address[] public allowedTokens; // only allowed tokens can be used for betting
+    */
+    
 
     enum LOTTERY_STATE {
         OPEN,
@@ -76,6 +81,24 @@ contract Lottery is Ownable {
 
        // update total value locked
        totalValueLocked += stakeAmount;
+   }
+
+    // this allows player to reduce his stake or exit completely
+   function updateStakeBeforeStart() public {
+        require(lottery_state == LOTTERY_STATE.OPEN);
+        address staker = msg.sender;
+        uint amount = balances[staker].stakedAmount;
+        token.transfer(staker, amount);
+        balances[staker].stakedAmount -= amount;
+   }
+
+   function claimRewards() public {
+       address staker = msg.sender;
+       require(lottery_state == LOTTERY_STATE.CLOSED);
+       require(balances[staker].winner == true, "You are not a winner");
+       require(balances[staker].rewarded == false, "You have claimed the rewards already");
+       token.transfer(staker, calculatePrize());
+       balances[staker].rewarded = true;
    }
 
    function getEntranceFee(uint256 _betAmount) public pure returns(uint entryFee){
@@ -126,34 +149,6 @@ contract Lottery is Ownable {
         //    token.transfer(treaury, totalValueLocked);
        }
        return winAmount;
-   }
-
-    // THIS IS NOT FINISHED
-   function mintAndBurnPrize(bool winner) public {
-       // assess if player is a winner
-       // if winner, mint tokens
-       // if loser, burn staked tokens
-       
-       // get staked amount
-       address staker = msg.sender;
-       uint amount = getUserTVL(staker);
-       require(balances[staker].rewarded == false, "Reward already paid out");
-
-       if (winner) {
-           // return original stake plus mint same amount
-           // this way user gets 2x reward
-           console.log("mintAndBurnPrize amount is %",amount );
-           token.transfer(staker, amount);
-           // remove player from mapping
-           balances[staker].stakedAmount = 0;
-           balances[staker].rewarded = true;
-       } else {
-           // burn tokens here
-           token.burnFrom(staker, amount);
-           balances[staker].stakedAmount = 0;
-           balances[staker].rewarded = true;
-       }
-
    }
 
     // get how much money user staked

@@ -89,7 +89,7 @@ describe.only("Betting Contract", function () {
   });
 
   describe("Calculate prize", function (){    
-    it("Should get winning amount", async function(){
+    it("Claim rewards", async function(){
       // arrange
       token.transfer(addr1.address, ethers.utils.parseEther("0.05"));
       token.transfer(addr2.address, ethers.utils.parseEther("0.05"));
@@ -105,27 +105,39 @@ describe.only("Betting Contract", function () {
       
       await lottery.connect(owner).endLottery();
       await lottery.connect(owner).getWinners("ARSENAL");
+
+      const testPlayer = addr3;
+
+      const walletBefore = (await token.balanceOf(testPlayer.address)).toString();
       
       // Act
-      const prize = await lottery.connect(addr2).calculatePrize();
+      await lottery.connect(testPlayer).claimRewards();
+      const walletAfter = (await token.balanceOf(testPlayer.address)).toString();
       
       // Assert
-      console.log("Calculated prize as share of pool: ", prize);
-      // expect(prize).to.equal(24);
+      console.log("Wallet before: ", walletBefore);
+      console.log("Wallet after: ", walletAfter);
+      expect(walletAfter).to.equal("55600000000000000");
+
+      // Assert 2
+      // claim prize second time
+      await expect(lottery.connect(testPlayer).claimRewards()).to.be.revertedWith("You have claimed the rewards already");
     })
 
-    it.skip("Should get 0 as there are no winners", async function(){
+    it("Should get 0 as there are no winners", async function(){
       //Arrange
-      await lottery.enterLottery("ARSENAL");
-
+      token.transfer(addr1.address, ethers.utils.parseEther("0.05"));
+      await token.connect(addr1).approve(lottery.address, ethers.utils.parseEther("0.05"));
+      await lottery.connect(addr1).enterLottery("BARCELONA", {value: ethers.utils.parseEther("0.01") });
+      await lottery.connect(owner).endLottery();
+      await lottery.connect(owner).getWinners("ARSENAL");
            
       // Act
-      const prize = await lottery.calculatePrize(addr2.address);
+      // Acting is part of assertion in expect error
       
       // Assert
-      // expect 0 as there are no winners
-      // test transaction --> prize will go to treasury
-       expect(prize).to.equal(0);
+      // expect transaction to be reverted with error as the player is not a winner
+      await expect(lottery.connect(addr1).claimRewards()).to.be.revertedWith('You are not a winner')
     })
   })
 
