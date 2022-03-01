@@ -3,7 +3,7 @@ const { ethers } = require("hardhat");
 const {web3} = require("@nomiclabs/hardhat-web3");
 
 
-describe.only("Betting Contract", function () {
+describe("Betting Contract", function () {
   // A common pattern is to declare some variables, and assign them in the
   // `before` and `beforeEach` callbacks.
   let Lottery;
@@ -27,7 +27,7 @@ describe.only("Betting Contract", function () {
     await lottery.deployed();
   });
 
-  describe.skip("Get user TVL", function(){
+  describe("Get user TVL", function(){
     it("Should get user's staked amount", async function(){
       // ARRANGE
       token.transfer(addr2.address, ethers.utils.parseEther("0.5"));
@@ -41,20 +41,7 @@ describe.only("Betting Contract", function () {
     })
   })
 
-  describe.skip("Mint and Burn reward", function(){
-    it("Should mint tokens for winner", async function(){
-      // ARRANGE
-      token.transfer(addr2.address, ethers.utils.parseEther("0.5"));
-      await token.connect(addr2).approve(lottery.address, ethers.utils.parseEther("0.05"));
-      await lottery.connect(addr2).enterLottery("ARSENAL", {value: ethers.utils.parseEther("0.05") });
-      // ACT
-      await lottery.connect(addr2).mintAndBurnPrize(true);
-      // ASSERT
-      expect(await token.balanceOf(addr2.address)).to.equal(ethers.utils.parseEther("0.545"))
-    })
-  })
-
-  describe.skip("Enter lottery", function(){
+  describe("Enter lottery", function(){
     it("Should return staker info", async function(){
     // ARRANGE
     token.transfer(addr2.address, ethers.utils.parseEther("0.5"));
@@ -71,20 +58,6 @@ describe.only("Betting Contract", function () {
     // expect(stakedAmount.stakedAmount).to.equal(0); // there is 5% fee
     console.log("Staked amount is %s", stakedAmount.stakedAmount);
     expect(stakedAmount.betOnThis).to.equal("ARSENAL");
-    });
-  });
-
-  // tested and works
-  describe.skip("Get entrance fee", function () {
-    it("Should check the betting amount", async function () {
-      // ARRANGE
-      await deBeToken.transfer(addr2.address, 500);
-
-      // ACT
-      const fee = await lottery.getEntranceFee(250);
-      
-      // ASSERT
-      expect(fee).to.equal(12);
     });
   });
 
