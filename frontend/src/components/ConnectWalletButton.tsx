@@ -5,7 +5,6 @@ import Tooltip from "@mui/material/Tooltip";
 export function ConnectWalletButton() {
   return (
     <>
-      {/* connect metamask */}
       <Tooltip title="This action will connect your Wallet">
         <Button
           variant="contained"

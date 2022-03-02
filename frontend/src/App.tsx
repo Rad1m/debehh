@@ -18,17 +18,6 @@ interface IProps {}
 
 interface IState {}
 
-declare global {
-  interface Window {
-    ethereum: {
-      request<T>(params: { method: string }): Promise<T>;
-      on<T>(event: string, cb: (params: T) => void): void;
-      removeListener<T>(event: string, cb: (params: T) => void): void;
-      selectedAddress: string | undefined;
-    };
-  }
-}
-
 export class App extends React.Component<IProps, IState> {
   constructor(props: IProps) {
     super(props);
