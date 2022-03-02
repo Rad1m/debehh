@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { ethers } from "ethers";
 // import Solidity contract artifacts
 import TokenArtifact from "./contracts/DeBeToken.json";
@@ -17,6 +17,17 @@ const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
 interface IProps {}
 
 interface IState {}
+
+declare global {
+  interface Window {
+    ethereum: {
+      request<T>(params: { method: string }): Promise<T>;
+      on<T>(event: string, cb: (params: T) => void): void;
+      removeListener<T>(event: string, cb: (params: T) => void): void;
+      selectedAddress: string | undefined;
+    };
+  }
+}
 
 export class App extends React.Component<IProps, IState> {
   constructor(props: IProps) {
